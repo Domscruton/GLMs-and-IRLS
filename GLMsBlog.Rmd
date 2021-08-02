@@ -1,0 +1,42 @@
+---
+title: "GLMs: Intuition behind the Link function and Derivation of Iteratively Reweighted Least Squares"
+author: "Dominic Scruton"
+date: "2 August 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## GLMs - A Natural Extension of the Linear Model
+
+The first model we naturally learn on any statistics-based course is the Simple Linear Regression (SLR) model. Despite placing strong assumptions on the relationship between the predictor and covariates, as well as the error distribution if we are interested in statistical inference, the Linear model is a surprisingly useful tool that represents many natural target generating processes.
+
+When we wish to deal with non-linear random variable generating processes, such as the probability of occurence of an event from a binary or multinomial distribution, or when we wish to model counts within a given time period, or when we suspect the mean-variance relationship of the linear model is not appropriate, we can generalize our approach to any distribution within the exponential family.
+
+Generalized Linear Models have 3 components:
+
+__1) Random Component Error Structure__
+
+$$y_i \sim exponential family distibution$$
+
+We also typically assume each $y_i$ is independent and identically distributed, although this assumption can be relaxed through the use of Generalized Estimating Equations (GEE's). 
+
+__2) Systematic Component/ Linear Predictor__
+
+$$\eta_i = \beta_0 + \sum_{i = 1}^{p}\beta_p x_{i, p}$$
+
+__3) Link Function__
+
+$$$$
+
+
+The link function therefore transforms the response- note that we are modelling the mean, $\mu_i$. This mean is then used to make predictions regarding $y_i$. 
+
+## Link Functions
+
+So Generalized Linear models are simply a natural extension of the Linear Model. 
+
+## Iteratively Reweighted Least Squares (IRLS)
+
