@@ -64,8 +64,14 @@ We can also check the AIC or Cross-Validation to choose the best-fitting link fu
 
 ## The Exponential Family of Distributions
  
-A random
+A random variable y has a distribution within the exponential family if its probability density function is of the form:
 
+$$f(y;\theta, \phi) = exp[\frac{y \theta - b(\theta)}{a(\phi) + c(y, \phi)}$$
+
+where:
+- $\theta$ is the location parameter of the distribution
+- $a(\phi)$ is the scale/dispersion parameter
+- $c(y, \phi)$ is a normalization term
 
 ## Likelihood Analysis and Newton-Raphson Method
 
