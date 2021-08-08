@@ -13,13 +13,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 The first model we naturally learn on any statistics-based course is the Simple Linear Regression (SLR) model. Despite placing strong assumptions on the relationship between the predictor and covariates, as well as the error distribution if we are interested in statistical inference, the Linear model is a surprisingly useful tool that represents many natural target generating processes.
 
-When we wish to deal with non-linear random variable generating processes, such as the probability of occurence of an event from a binary or multinomial distribution, or when we wish to model counts within a given time period, or when we suspect the mean-variance relationship of the linear model is not appropriate, we can generalize our approach to any distribution within the exponential family.
+In this brief blog we discuss the intuition behind the Generalized Linear Model and Link function and prove the method of Iteratively ReWeighted Least Squares enables us to fit a GLM, before implementing it in R. 
+
+When we wish to deal with non-linear random variable generating processes, such as the probability of occurrence of an event from a binary or multinomial distribution, or when we wish to model counts within a given time period, or when we suspect the mean-variance relationship of the linear model is not appropriate, we can generalize our approach to any distribution within the exponential family.
 
 Generalized Linear Models have 3 components:
 
 __1) Random Component Error Structure__
 
-$$y_i \sim exponential family distibution$$
+$$y_i \sim$$ exponential family distibution
 
 We also typically assume each $y_i$ is independent and identically distributed, although this assumption can be relaxed through the use of Generalized Estimating Equations (GEE's). 
 
@@ -29,14 +31,45 @@ $$\eta_i = \beta_0 + \sum_{i = 1}^{p}\beta_p x_{i, p}$$
 
 __3) Link Function__
 
-$$$$
+$$\mathop{\mathbb{E}}[y_i | x_{1, i}, ..., x_{p, i}] = \mu_i$$
+$$g(\mu_i) = \eta_i$$
 
+The link function does not transform the response $y_i$ but instead it transforms the mean $\mu_i$
 
-The link function therefore transforms the response- note that we are modelling the mean, $\mu_i$. This mean is then used to make predictions regarding $y_i$. 
+The link function therefore transforms the response- note that we are modelling the mean, $\mu_i$. This mean is then used to make predictions regarding $y_i$. Note that a linear model is a specific type of GLM, where $y_i \sim Normal$ and $g(\mu_i) = \mu_i = \eta_i = \beta_0 + \sum_{i = 1}^{p}\beta_p x_{i, p}$. 
+
+We always model the mean for a GLM, $\m_i$, as opposed to $y_i$. For a Poisson GLM, each $y_i$ is a r.v. simulated from the Poisson distribution with mean $\mu_i$, hence $y_i$ has a Poisson error distribution, the difference between $y_i$ and $\hat{y_i} = \mu_i$.
+
+For a Binomial, we choose a link function that maps $p_i$, the probability of success to the interval $[0, 1]$. The canonical link function is $g(\mu_i) = log(\frac{p_i}{n - p_i}) = X \beta_i$. We then have $\frac{p_i}{1 - p_i} = \exp(X \beta_i)$ $\implies p_i = (\frac{e^{X \beta_i}}{1 + e ^ {X \beta_i}}) \in [0, 1]$. Then we have $y_i \sim Bin(p_i)$
 
 ## Link Functions
 
-So Generalized Linear models are simply a natural extension of the Linear Model. 
+So Generalized Linear models are simply a natural extension of the Linear Model. They differ through the explicit introduction of a link function (the link function for the linear model is simply the identity, $g(\mu) = \mu$) and through the specification of a mean-variance relationship (the response belong to a member of the exponential family). 
+
+Using a link function allows us to transform values of the linear predictor to predictions of the mean, such that these predictions are always contained within the range of possible values for the mean, $\mu_i$. 
+
+When choosing a link function, there is no 'correct' answer, however there are a few properties we requires to be able to interpret and fit a model:
+
+1) The link function transforms the linear predictor such that the prediction of $\mu_i$ for each $y_i$ is within the range of possible values of $\mu$.
+
+2) The link function must be _monotonic_ and therefore have a _unique inverse_ That is, each value on the linear predictor must be mapped to a unique value of the mean and the link function must preserve the order/ranking of predictions. 
+
+3) The link function must be _differentiable_, in order to estimate model coefficients. 
+
+For OLS, the linear predictor $X\beta$ can take on any value in the range $(-\infty, \infty)$. For a Poisson model, we require the rate parameter $\mu$ (equivalent to the commonly used $\lambda$), to lie in the range $(0, \inf$, thus we need a transformation of this linear predictor. The common choice of link function for a Poisson GLM is the log-link ($\log(\mu_i) = \eta_i$). Exponentiating the value of the linear predictor results in $\mu_i \in (0, \infty)$ as required for count data modeled via a Poisson. Note that we can't use the square root function as a link function since it does not have a _unique inverse_ (i.e. $\sqrt(4) = \pm 2$).  
+
+Whilst we are able to choose any link function that satisfies these properties, the usual choice is to select the _Canonical_ link function, which arises from writing the distribution in its exponential form (why?). The log-link also results in a nice interpretation, since it exponentiates the linear predictor resulting in a multiplication of exponentiated coefficients: $log(\mu_i) = exp(\b_0 + \beta_1 x_{1, i}) = \exp(\beta_0) \exp(\beta_1 x_{1, i})$. 
+
+We can also check the AIC or Cross-Validation to choose the best-fitting link function. 
+
+## The Exponential Family of Distributions
+ 
+A random
+
+
+## Likelihood Analysis and Newton-Raphson Method
+
+
 
 ## Iteratively Reweighted Least Squares (IRLS)
 
