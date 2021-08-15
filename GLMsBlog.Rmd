@@ -85,19 +85,81 @@ It can also be shown that $\mathop{\mathbb{E}}[y] = b'(\theta)$ and $Var[y] = b'
 
 ## Likelihood Analysis and Newton-Raphson Method
 
+Any for of Statistical Learning algorithminvolves optimization. Optimization refers to the task of either minimizing or maximizing some function $f(\mathbf{\beta})$ by altering $\beta$. We usually phrase most optimization problems in terms of minimizing $f(\beta)$. For the case of parametric learning models (we place distributional assumptions on the target/response $y_i$, such that they are drawn independently from  some probability distribution $p_{model}(y, \theta)$), where $\theta$ is unknown.  we can also use the process of Maximum Likelihood to find model coefficients. Under this approach, we have the following optimization problem:
+
+$$\beta^* =arg max(l(y_i))$$ 
+
+where $l(y_i)$ is the likelihood function. 
+
+<div class="alert alert-info">
+  <strong>Why Maximum Likelihood?</strong> There are several reasons why the process of Maximum Likelihood is preferential:
+  1) Simple and intuitive method to find estimates for any _parametric_ model.
+  2) For large samples, MLE's have useful properties, assuming large n and i.i.d (independent and identically distributed) samples
+    a) $\mathop{\mathbb{E}}[\hat{\theta}_{MLE}] = \theta$ (__Unbiased__)
+    b) $Var(\hat{\theta}_{MLE}) = \frac{1}{n I(\theta)}$, where $I(\theta)$ is the Fisher Information in the sample. That is, we can calculate the variance of model coefficients and hence perform inference
+    c) The MLE also achieves the __Cramer Lower Bound__, that is it has the smallest variance of any estimator, thus is __Asymptotically Efficient__.
+</div>
+
 As for any parametric model (a distribution for the response is assumed), we can use the procedure of Maximum Likelihood to estimate model coefficients. Consider the general form of the probability density function for a member of the exponential family of distributions, as seen above:
 
 $$f(y;\theta, \phi) = exp \left( \frac{y \theta - b(\theta)}{a(\phi)} + c(y, \phi) \right)$$
 
 The likelihood is then (assuming independence of observations):
 
-$L(f(y)) = \prod_{i = 1}^n exp \left( \frac{1}{a(\phi)} (y_i \theta_i - b(\theta_i) + c(y_i, \phi) \right)$
+$$L(f(y_i)) = \prod_{i = 1}^n exp \left( \frac{1}{a(\phi)} (y_i \theta_i - b(\theta_i) + c(y_i, \phi) \right)$$
 
-and then log-likelihood (since the )
-We wish to maximize this log-likelihood, hence we can differentiate, equate to zero and solve for $\beta_j$. We can also ensure the second derivative evaluated at $\beta_j$ is negative, therefore we have maximized (and not minimized) the log-likelihood. 
+and then log-likelihood (since the product of exponential terms is the exponential of the sum). 
+
+$$log(L(f(y_i))) = l(f(y_i)) = \sum_{i = 1}^n \frac{1}{a(\phi)}(y_i \theta_i - b(\theta_i)) + c(y_i, \phi)$$
+
+We wish to maximize this log-likelihood, hence we can differentiate, equate to zero and solve for $\beta_j$. We can also ensure the second derivative evaluated at $\beta_j$ is negative, therefore we have maximized (and not minimized) the log-likelihood. Via the Chain Rule we have:
+
+_3.1_
+
+$$\frac{\partial l(f(y_i))}{\partial \beta_j} = \sum_{i = 1}^n \frac{\partial l(f(y_i))}{\partial \theta_i} \frac{\partial \theta_i}{\partial \mu_i} \frac{\partial \mu_i}{\partial \eta_i} \frac{\partial \eta_i}{\partial \beta_j} = 0$$
+
+<div class="alert alert-info">
+  <strong>Chain Rule</strong> Chain Rule is often used in Optimization problems. Here we can utilize chain rule by recognizing that, as seen in _3.1_, the likeihood is a function of the location parameter of the distribution, $\theta$, which in turn is a function of the mean $\mu$. Via the link function, we have that $g(\mu_i) = \eta_i$ and via the linear predictor, $\eta_i = \beta_0 + \sum_{i = 1}^{p}\beta_p x_{i, p}$. 
+</div>
+
+This is also known as the Score function, since it tells us how sensitive the model is to changes in $\beta$ at a given value of $\beta$.
+
 Since we differentiate with respect to each coefficent, $\beta_j$ ($j \in [0, 1, ..., K]$), we have a system of (K + 1) equations to solve. 
 
 Since the log is a monotonically increasing function, the order is preserved hence finding the maximum of the log-likelihood yields the same result as finding the maximum of the likelihood. 
 
+Each of these individual partial derivatives can be solved:
+
+
+
+$$\frac{\partial l_i}{\partial \theta_i} = \frac{y_i - b'(\theta_i)}{a(\phi)}$$
+
+$$\frac{\partial \theta_i}{\partial \mu_i} = \frac{1}{V(\mu_i)}$$
+
+since $\frac{\mu_i}{\theta_i} = b''(\theta_i) = V(\mu_i)$ where V is the variance function of the model as it dictates the mean-variance relationship.
+
+$$\frac{\partial \mu_i}{\partial \eta_i} = \frac{1}{g'(\mu_i)}$$
+
+since $g(\mu_i) = \eta_i \implies \frac{\partial \eta_i}{\partial \mu_i} = g'(\mu_i)$
+
+$$\frac{\partial \eta_i}{\partial \beta_j} = x_j$$
+
+Putting this all together yields the Maximum Likelihood Equations:
+
+$$\sum_{i = 1}^n \frac{(y_i - \mu_i) x_{i, j}}{a(\phi) V(\mu_i) g'(\mu_i)} = 0$$
+
+<div class="alert alert-info">
+  <strong>Least Square Vs Maximum Likelihood</strong> If we assume a normal distribution, there are two methods to solve exactly for the coefficients (we could also use Gradient Descent however this does not typically yield an exact solution).   
+</div>
+
+However, this does not have a closed form solution (what does it mean for a linear system of equations to have a closed form solultion) (except for the normal distribution). As a sanity check to confirm our conclusions thus far, note that for the normal distribution we have the Normal Equations which have the standard closed form solution (what is it)?. The Maximum Likelihood equations are a set of equations for the regression coefficients $\mathbf{\beta} = (\beta_0, ..., \beta_1)$
+
+Effectively, we need to find coefficients $\beta_j$ (which for each observation $y_i$ affect our prediction of $\mu_$, $g'(\mu_i)$ and $V(\mu_i)$ via our distribtuional assumptions for the relationship between the mean and the variance), such that summing these terms over all observations gives 0. To solve this, we use the Newton - Raphson Method
+
 ## Iteratively Reweighted Least Squares (IRLS)
 
+Recall the Newton - Raphson method for a single dimension. We wish to find the root of the function (in this case the value of $\beta$ such that the derivative of the log-likelihood is 0). In One-Dimension, to find the root of function f we have:
+
+$$x_{t+1} = x_t - \frac{f(x_t)}{f'(x_t)}$$
+
+The closer $f(x_t)$ is to 0, the closer we are to the root, hence the step change between iterations will be smaller. 
