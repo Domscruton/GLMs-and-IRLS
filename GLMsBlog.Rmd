@@ -163,3 +163,131 @@ Recall the Newton - Raphson method for a single dimension. We wish to find the r
 $$x_{t+1} = x_t - \frac{f(x_t)}{f'(x_t)}$$
 
 The closer $f(x_t)$ is to 0, the closer we are to the root, hence the step change between iterations will be smaller. 
+
+<center>
+<img src="NewtonRaphson.png" alt="Newton Raphson Method in One Dimension", width = "40%">
+</center>
+
+Instead of the log-likelihood function $f(x)$, we want to optimize its derivative. Therefore we have the following Newton-Raphson equation in One-Dimension:
+
+$$x_{t+1} = x_t - \frac{f'(x_t)}{f''(x_t)}$$
+
+or for the vector of coefficient estimates at iteration t:
+
+$$\beta_{t+1} = \beta_t - \left( \frac{\partial l}{\partial \beta_j}(\beta_t) \right) \left( \frac{\partial^2 l}{\partial \beta_j \partial \beta_k} \right)^{-1}$$
+
+The Newton-Raphson technique is derived by considering the _Taylor Expansion_ about the solution $\beta^*$ (that sets $frac{\partial l}{\partial \beta}$ to zero). 
+
+$$0 = \frac{\partial l}{\partial \beta}(\beta^*) - (\beta - \beta^*) \frac{\partial^2 l}{\partial \beta_j \beta_k} + ...$$
+
+If we ignore all derivative terms higher than $2^{nd}$ order, we can derive and iterative solution. Under the Newton-Raphson approach, the function being minimized is approximated locally by a quadratic function, and this approximated function is minimized exactly. We then have:
+
+$$\beta_{t + 1} = \beta_t - \mathbf{H}^{-1}_t \mathbf{U}_t$$
+
+where $\mathbf{U}_t is the Score Vector$ evaluated at $\beta_t$. $\mathbf{H}_t$ denotes the (p + 1) x (p + 1) Hessian matrix of second Derivatives
+
+Given that $\frac{\partial l}{\beta_j} = \grad_{\beta} l = \frac{(y_i - \mu_i)}{a(\phi)} \frac{x_{i,j}}{V(\mu_i)}\frac{1}{g'(\mu_i)}$, the Hessian is then:
+
+__Equation 4__
+
+$$\grad^{2}_{\beta} = \sum_{i = 1}^n \frac{x_{i,j}}{a(\phi)} \left( (y_i - \mu_i)' \frac{1}{g'(\mu_i)} \frac{1}{V(\mu_i)} + (y_i - \mu_i) \left( \frac{1}{g'(\mu_i)} \frac{1}{V(\mu_i)} \right)' \right)$$
+
+by Product Rule. $y_i$ is a data point so does not depend on $\beta$. 
+
+$$\frac{\partial \mu_i}{\partial \beta_k} = \frac{\mu_i}{\eta_i} \frac{\eta_i}{\beta_k} = \frac{1}{g'(\mu_i)} x_k$$
+
+hence the first term becomes:
+
+$$\frac{x_{i,j}}{a(\phi)} \left( - \frac{x_{i, k}}{g'(\mu_i)} \right) \frac{1}{g'(\mu_i)} \frac{1}{V(\mu_i)} = - \frac{x_{i, j} x_{i, k}}{a(\phi)(g'(\mu_i))^2} \frac{1}{V(\mu_i)}$$
+
+Of course, if we differentiate by the same $\beta$-coefficient, we have $x_j^2$, which are values on the diagonal of the Hessian matrix, which recall is $\begin{bmatrix} \left( \frac{\partial ^2 l}{\partial \beta_j^2} \right) & \left( \frac{\partial ^2 l}{\partial \beta_k \partial \beta_j} \right)\\ \left( \frac{\partial ^2 l}{\partial \beta_j \partial \beta_k} \right) &  \left( \frac{\partial ^2 l}{\partial \beta_k^2} \right)\\ \end{bmatrix}$ in 2-Dimensions.
+
+Now consider the $2^{nd}$ term in __equation 4__:
+
+$$\left( \frac{1}{g'(\mu_i)} \frac{1}{V(\mu_i)} \right)'$$
+
+If we used Newton-Raphson, we would need to calculate this derivative. However, if we use __Fisher Scoring__, this term cancels out and we don't need to calculate the derivative. Fisher Scoring is a form of Newton's Method used in statistics to solve Maximum Likelihood equations numerically. Instead of usig the inverse of the Hessian, we use the inverse of the Fisher Information matrix:
+
+<div class="alert alert-info">
+  <strong>Fisher Scoring</strong> $$\beta_{t+1} = \beta_t = J^{-1} \grad l$$ where $J = \mathop{\mathbb{E}}[- \grad^2 l]$, the expected value of the negative Hessian.
+</div>
+
+Taking the negative expected value from __equation 4__, the first term becomes
+
+$$\mathop{\mathbb{E}} \left( - - \frac{x_{i,j} x_{i,k}}{a(\phi) (g'(\mu_i))^2} \frac{1}{V(\mu_i)} = \frac{x_{i,j}x_{i,k}}{a(\phi) (g'(\mu_i))^2} \frac{1}{V(\mu_i)}$$
+
+since none of the above values depende on $y$ hence are all constant. The $2^{nd}$ term in __equation 4__ becomes:
+
+$$\mathop{\mathbb{E}} \left( - \frac{x_{i,j}}{a(\phi)}(y_i - \mu_i) \left( \frac{1}{g'(\mu_i) V(\mu_i)} \right) ' \right) =  - \frac{x_{i,j}}{a(\phi)}(y_i - \mu_i) \left( \frac{1}{g'(\mu_i) V(\mu_i)} \right)' \mathop{\mathbb{E}}(y_i - \mu_i)$$
+
+but this expectation is equal to zero and the second term therefore vanishes. We then have:
+
+$$J = \sum_{i = 1}^n \frac{x_{i,j} x_{i,k}}{a(\phi) (g'(\mu_i))^2 \frac{1}{V(\mu_i)}} = \mathbf{X}^T \mathbf{W} \mathbf{X}$$
+
+This can be rewritten as:
+
+$$J = \mathbf{X}^T \mathbf{W} \mathbf{X}$$ 
+
+where 
+
+$$\mathbf{W} = \frac{1}{a(\phi)} \begin{bmatrix} \frac{1}{V(\mu_1)} \frac{1}{(g'(\mu_1))^2} &  & \\ & ... & \\ & & \frac{1}{V(\mu_n)(g'(\mu_n))^2}\\ \end{bmatrix}$$
+
+From Fisher Scoring, we have:
+
+$$\mathbf{\beta}_{t+1} = \mathbf{\beta_t} = \mathbf{J}^{-1} \grad_{\beta} l (\beta_t)$$
+
+We can rewrite $\grad_{\beta}l = \sum_{i = 1}^n \frac{y_i - \mu_i}{a(\phi)} frac{1}{a(\phi)} \frac{x_{i,j}}{V(\mu_i g'(\mu_i))}$ as  $\mathbf{X}^T \mathbf{D} \mathbf{V}^{-1} (y - \mu)$ where:
+
+$$\mathbf{D} = \begin{bmatrix} \frac{1}{g'(\mu_1)} & & \\ & ... & \\ & & \frac{1}{g'(\mu_n)} \\ \end{bmatrix}$$
+
+$$\mathbf{V}^{-1} = \frac{1}{a(\phi)} \begin{bmatrix} \frac{1}{V(\mu_1)} & & \\ & ... & \\ & & \frac{1}{V(\mu_n)} \\ \end{bmatrix}$$
+
+Then for the Fisher Equation we have:
+
+$$\mathbf{\beta}_{t+1} = \mathbf{\beta}_t + (\mathbf{X}^T \mathbf{W} \mathbf{X})^{-1} \mathbf{X}^T \mathbf{D} \mathbf{V}^{-1} (\mathbf{y} - \mathbf{\mu})$$
+
+We can write this more generally, by noting that $\mathbf{W}$ is the same as $\mathbf{D} \mathbf{V}^{-1}$, except we have $\frac{1}{(g'(\mu_i))^2}$.
+
+$$\implies \mathbf{D} \mathbf{V}^{-1} = \mathbf{W M}$$
+
+where
+
+$$\mathbf{M} = \begin{bmatrix}  \frac{1}{g'(\mu_1)} & & \\ & ... & \\ & & \frac{1}{g'(\mu_1)} \\ \end{bmatrix}$$
+
+$$\implies \beta_{t + 1} = \beta_t + (X^T W X)^{-1} X^T W M (y - \mu)$$
+
+We can already calculate each of these terms and thus generate an iterative model-fitting algorithm. We can update the $\beta$'s until convergence of the algorithm. We can then simplify the equation:
+
+$$\beta_{t+1} = (X^T W X)^{-1} (X^T W X) beta_t + (X^T W X)^{-1} X^T W M (y - \mu) =
+  (X^T W X)^{-1} X^T W (X \beta_t + M (y - \mu)) = 
+  (X^T W X)^{-1} X^T W Z_t$$
+  
+where $Z_t := \eta_t + M(y - \mu)$
+
+This is "iteratively Reweighted Least Squares"- at each iteration we are solving a weighted least squares problem, is iterative because we update W's and Z's at the same time. The amount the algorithm updates depends on two things- $Z_t$ and $W$. For $Z_t$, larger deviation between $y$ and $\mu$ results in larger steps in the iteration procedure. Unless we have a saturated model, $y \not \mu$ (observed values don't equal predicted values), there is a trade-off as we vary $\beta$, resulting in different discrepencies between $y_i$ and $\mu_i$. 
+
+<div class="alert alert-info">
+  <strong>Derivation of Model Fitting Algorithms/Coefficients</strong> This derivation of Iteratively Reweighted Least Squares for GLMs follows a similar procedure to the derivation of any model fitting algorithm. Firstly, we identify an objective function over which to optimize. Typical Machine Learning problems involve minimizing some loss function, which gives discrepencies between the actual and true values. We then differentiate this function to find a minimum and use Newton - Raphson ... What other algorithms are there for fitting other models and how are their model-fitting algorithms derived?
+</div>
+
+<div class="alert alert-info">
+  <strong>Why Bother with Parametric Assumptions</strong> 
+  - Large amounts of data can be modelled as random variables from the exponential family of distributions
+  - If there are relatively few observations, providing a structure for the model generating process can improve predictive performance
+  - Enables us to carry out inference on model covariates
+  - Simple and intuitive to understand. In some industries (such as insurance), this has huge benefits- it is transparent and can fit into a rate structure
+  
+  Disadvantages:
+  - Validity of inference dependent on assumptions being satisfied
+  - Places a very rigid structure
+  - Typically has worse predictive performance than non-linear models, such as Boosted Trees and Neural Networks. 
+</div>
+
+## IRLS Implementation
+
+In the following, we implement IRLS for Generalized Linear Models (GLMs). We could also write in C++ for a more efficient implementation. 
+
+```{r}
+
+
+```
