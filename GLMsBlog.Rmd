@@ -62,6 +62,12 @@ Some common distributions and Canonical links are show below:
 | Poisson | Log: $\eta = log(\mu)$ | $\mu = e^{\eta}$ |
 | Gamma | Inverse: $\eta = \frac{1}{\mu}$ | $\mu = \frac{1}{\eta}$ |
 
+Note that we have been working with several different parameterizations of a GLM; these parameters are unique functions of each other, as described below:
+
+$$\theta \xrightarrow{b'(.)} \mu \xrightarrow{g()} \eta$$
+
+Here $b(.)$ and hence $b'(.)$, are determined by the choice of variance function. The link function $g(.)$, on the other hand, is part of the modelling of the mean and in some applications there are several reasonable choices. The choice $g(.) = b'^{-1}(.)$ is the _canonical_ link, which makes $\theta = \eta$. Using the Canonical link simplifies some computations, but the name can be misleadiing since it may not be the natural choice in  particular application. On the other hand, several of the most common models use the canonical link (Gaussian, Poisson and for Binomial we tend to use Logit due to ease of interpretation). 
+
 ## The Exponential Family of Distributions
  
 A random variable y has a distribution within the exponential family if its probability density function is of the form:
@@ -116,7 +122,9 @@ with log-likelihood (since the log of the product of exponentials is the sum of 
 
 $$log(L(f(y_i))) = l(f(y_i)) = \sum_{i = 1}^n \frac{1}{a(\phi)}(y_i \theta_i - b(\theta_i)) + c(y_i, \phi)$$
 
-Since the logarithmic function is monotonically increasing, order is preserved hence finding the maximum of the log-likelihood yields the same result as finding the maximum of the likelihood. We wish to maximize this log-likelihood, hence we can differentiate, equate to zero and solve for $\beta_j$ (We could also ensure the second derivative evaluated at $\beta_j$ is negative, therefore we have maximized (and not minimized) the log-likelihood). Via the Chain Rule we have:
+By differentiating the log-likelihood with respect to each $\beta$, we get a system of equations for the maximum likelihood estimates, the so called ML equations.
+
+Since the logarithmic function is monotonically increasing, order is preserved hence finding the maximum of the log-likelihood yields the same result as finding the maximum of the likelihood. We wish to maximize this log-likelihood, hence we can differentiate, equate to zero and solve for $\beta_j$ (We could also ensure the second derivative evaluated at $\beta_j$ is negative, therefore we have maximized (and not minimized) the log-likelihood). By differentiationVia the Chain Rule we have:
 
 __Equation 1__
 
@@ -144,13 +152,17 @@ since $g(\mu_i) = \eta_i \implies \frac{\partial \eta_i}{\partial \mu_i} = g'(\m
 
 $$\frac{\partial \eta_i}{\partial \beta_j} = x_j$$
 
-Putting this all together yields the Maximum Likelihood Equations:
+Putting this all together yields the ML Equations:
 
 $$\sum_{i = 1}^n \frac{(y_i - \mu_i) x_{i, j}}{a(\phi) V(\mu_i) g'(\mu_i)} = 0$$
 
 <div class="alert alert-info">
   <strong>Least Square Vs Maximum Likelihood</strong> If we assume a normal distribution, there are two methods to solve exactly for the coefficients (we could also use Gradient Descent however this does not typically yield an exact solution).   
 </div>
+
+It might look as if the solution is simply $\mu_i = y_i$, but then we forget that we have $\mu_i = g^{-1}(\eta_i)$, that is $\mu_i$ is naturally dependent on the regression coefficients $\beta_i$. Only in the case of the saturated model, where we exactly predict $y_i$ by having as many coefficients as data points, do we get the result $y_i = \mu_i$. These ML equations don't have an explicit solution, except for the Linear model.
+
+It is interesting to note that the only property of the probability distribution that affects the ML equations is the mean and the variance, through the link function $g(.)$ and the variance function $V(.)$. 
 
 However, this does not have a closed form solution (what does it mean for a linear system of equations to have a closed form solultion) (except for the normal distribution). As a sanity check to confirm our conclusions thus far, note that for the normal distribution we have the Normal Equations which have the standard closed form solution (what is it)?. The Maximum Likelihood equations are a set of equations for the regression coefficients $\mathbf{\beta} = (\beta_0, ..., \beta_1)$
 
@@ -162,7 +174,7 @@ Recall the Newton - Raphson method for a single dimension. We wish to find the r
 
 $$x_{t+1} = x_t - \frac{f(x_t)}{f'(x_t)}$$
 
-The closer $f(x_t)$ is to 0, the closer we are to the root, hence the step change between iterations will be smaller. 
+The closer $f(x_t)$ is to 0, the closer we are to the root, hence the step change between iterations will be smaller. Here we start with some initial value $x_0$ and iterate. This method has a straight-forward generalization to the case with r equations and r unknown variables, with the matrix of first derivatives replacing $f'$.
 
 <center>
 <img src="NewtonRaphson.png" alt="Newton Raphson Method in One Dimension", width = "40%">
@@ -184,7 +196,9 @@ If we ignore all derivative terms higher than $2^{nd}$ order, we can derive and 
 
 $$\beta_{t + 1} = \beta_t - \mathbf{H}^{-1}_t \mathbf{U}_t$$
 
-where $\mathbf{U}_t is the Score Vector$ evaluated at $\beta_t$. $\mathbf{H}_t$ denotes the (p + 1) x (p + 1) Hessian matrix of second Derivatives
+where $\mathbf{U}_t is the Score Vector$ evaluated at $\beta_t$. $\mathbf{H}_t$ denotes the (p + 1) x (p + 1) Hessian matrix of second Derivatives.
+
+Fisher Scoring replaces $\mathbf{H}$ by its expected value, the negative of the Fisher Information, $- \mathbf{I}$. In the special case of the canonical link function, these two possible methods for estimating model coefficients in a GLM are identical. Fisher's Information is somewhat easier to implement. As opposed to $\mathbf{H}$, the matrix $\mathbf{I}$ is always positive definite, therefore we expect more stable convergence using Fisher's Method. However, Newton's Method is faster and when we get close to the target, $\mathbf{H}$ is also positive definite. This suggests that we could start with a few steps of Fisher's Scoring and then change to Newton-Raphson when we approach the solution.  
 
 Given that $\frac{\partial l}{\beta_j} = \nabla_{\beta} l = \frac{(y_i - \mu_i)}{a(\phi)} \frac{x_{i,j}}{V(\mu_i)}\frac{1}{g'(\mu_i)}$, the Hessian is then:
 
@@ -214,7 +228,7 @@ If we used Newton-Raphson, we would need to calculate this derivative. However, 
 
 Taking the negative expected value from __equation 4__, the first term becomes
 
-$$\mathop{\mathbb{E}} \left( - - \frac{x_{i,j} x_{i,k}}{a(\phi) (g'(\mu_i))^2} \frac{1}{V(\mu_i)} = \frac{x_{i,j}x_{i,k}}{a(\phi) (g'(\mu_i))^2} \frac{1}{V(\mu_i)}$$
+$$\mathop{\mathbb{E}} \left( - \frac{x_{i,j} x_{i,k}}{a(\phi) (g'(\mu_i))^2} \frac{1}{V(\mu_i)} = \frac{x_{i,j}x_{i,k}}{a(\phi) (g'(\mu_i))^2} \frac{1}{V(\mu_i)}$$
 
 since none of the above values depende on $y$ hence are all constant. The $2^{nd}$ term in __equation 4__ becomes:
 
@@ -269,6 +283,8 @@ This is "iteratively Reweighted Least Squares"- at each iteration we are solving
 The Hessian is a matrix of second derivatives of the log-likelihood function, that is, derivatives of the derivative of the log-likelihood function. The second derivative therefore measures curvature, that is how much the first derivative changes as we vary the input. If the likelihood has a second derivative of zero, then the likelihood (cost function) is a flat line, so its value can be predicted using only the gradient. If the gradient is 1, a step size of $\epsilon > 0$ then the likelihood function will increase by the value of $\epsilon$. If the $2^{nd}$ derivative is negative (the gradient of the likelihood function is becoming more negative fo an increase $\epsilon$ at $x$), the likelihood function curves downwards, so the likelihood will decrease by more than $\epsilon$. That is, the likelihood decreases faster than the gradient predicts for small $\epsilon$. 
 
 When our function has multiple input dimensions, there are many $2^{nd}$ derivatives (one for each feature and then for each feature crossed with every other feature), and can be collected in a matrix called the _Hessian_. If we look at the IRLS equation, we have 3 terms. Firstly, we have the original value of the function, the expected improvement due to the slope of the function and a correction we must apply to account for the curvature of the function. When this last term is too small, the likelihood step can actually move downhill. 
+
+Note that for a Guassian model, all weights are equal, hence the estimates reduce to the well-known "normal equations" for a Linear Model. 
 
 <div class="alert alert-info">
   <strong>Derivation of Model Fitting Algorithms/Coefficients</strong> This derivation of Iteratively Reweighted Least Squares for GLMs follows a similar procedure to the derivation of any model fitting algorithm. Firstly, we identify an objective function over which to optimize. Typical Machine Learning problems involve minimizing some loss function, which gives discrepencies between the actual and true values. We then differentiate this function to find a minimum and use Newton - Raphson ... What other algorithms are there for fitting other models and how are their model-fitting algorithms derived?
